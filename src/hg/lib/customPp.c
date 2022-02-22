@@ -105,6 +105,17 @@ if (reused)
     return reused->name;
     }
 
+char* concatenate(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+	
 char * signed_http_from_drs(char * uri) {
     FILE *fp;
 
