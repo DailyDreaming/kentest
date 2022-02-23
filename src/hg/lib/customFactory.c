@@ -1714,25 +1714,25 @@ static struct customTrack *hicLoader(struct customFactory *fac,
     	struct customPp *cpp, struct customTrack *track, boolean dbRequested)
 /* Load up hic data until get next track line. */
 {
-struct hash *settings = track->tdb->settingsHash;
-char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
-if (startsWith("drs://", bigDataUrl))
-    {
-        bigDataUrl = signed_http_from_drs(bigDataUrl);
-    }
-requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
-checkAllowedBigDataUrlProtocols(bigDataUrl);
-
-if (doExtraChecking)
-    {
-    struct hicMeta *meta;
-    char *hicErrMsg = hicLoadHeader(bigDataUrl, &meta, track->genomeDb);
-    if (hicErrMsg != NULL)
+    struct hash *settings = track->tdb->settingsHash;
+    char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
+    if (startsWith("drs://", bigDataUrl))
         {
-        track->networkErrMsg = cloneString(hicErrMsg);
+            bigDataUrl = signed_http_from_drs(bigDataUrl);
         }
-    }
-return track;
+    requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
+    checkAllowedBigDataUrlProtocols(bigDataUrl);
+
+    if (doExtraChecking)
+        {
+        struct hicMeta *meta;
+        char *hicErrMsg = hicLoadHeader(bigDataUrl, &meta, track->genomeDb);
+        if (hicErrMsg != NULL)
+            {
+            track->networkErrMsg = cloneString(hicErrMsg);
+            }
+        }
+    return track;
 }
 
 struct customFactory hicFactory =
@@ -2747,28 +2747,35 @@ static struct customTrack *bigWigLoader(struct customFactory *fac,
     	struct customPp *cpp, struct customTrack *track, boolean dbRequested)
 /* Load up wiggle data until get next track line. */
 {
-/* Not much to this.  A bigWig has nothing here but a track line. */
-struct hash *settings = track->tdb->settingsHash;
-char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
-requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
-checkAllowedBigDataUrlProtocols(bigDataUrl);
+    /* Not much to this.  A bigWig has nothing here but a track line. */
+    struct hash *settings = track->tdb->settingsHash;
+    char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
 
-/* protect against temporary network error */
-struct errCatch *errCatch = errCatchNew();
-if (errCatchStart(errCatch))
-    {
-    char *db = ctGenomeOrCurrent(track);
-    track->bbiFile = bigWigFileOpenAlias(bigDataUrl, chromAliasChromToAliasHash(db));
-    setBbiViewLimits(track);
-    }
-errCatchEnd(errCatch);
-if (errCatch->gotError)
-    {
-    track->networkErrMsg = cloneString(errCatch->message->string);
-    }
-errCatchFree(&errCatch);
 
-return track;
+    if (startsWith("drs://", bigDataUrl))
+        {
+            bigDataUrl = signed_http_from_drs(bigDataUrl);
+        }
+
+    requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
+    checkAllowedBigDataUrlProtocols(bigDataUrl);
+
+    /* protect against temporary network error */
+    struct errCatch *errCatch = errCatchNew();
+    if (errCatchStart(errCatch))
+        {
+        char *db = ctGenomeOrCurrent(track);
+        track->bbiFile = bigWigFileOpenAlias(bigDataUrl, chromAliasChromToAliasHash(db));
+        setBbiViewLimits(track);
+        }
+    errCatchEnd(errCatch);
+    if (errCatch->gotError)
+        {
+        track->networkErrMsg = cloneString(errCatch->message->string);
+        }
+    errCatchFree(&errCatch);
+
+    return track;
 }
 
 static struct customFactory bigWigFactory =
@@ -2892,31 +2899,37 @@ static struct customTrack *bigBedLoader(struct customFactory *fac,
     	struct customPp *cpp, struct customTrack *track, boolean dbRequested)
 /* Load up big bed data until get next track line. */
 {
-/* Not much to this.  A bigBed has nothing here but a track line. */
-struct hash *settings = track->tdb->settingsHash;
-char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
-requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
-checkAllowedBigDataUrlProtocols(bigDataUrl);
+    /* Not much to this.  A bigBed has nothing here but a track line. */
+    struct hash *settings = track->tdb->settingsHash;
+    char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
 
-/* protect against temporary network error */
-struct errCatch *errCatch = errCatchNew();
-if (errCatchStart(errCatch))
-    {
-    char *db = ctGenomeOrCurrent(track);
-    track->bbiFile = bigBedFileOpenAlias(bigDataUrl, chromAliasChromToAliasHash(db));
-    }
-errCatchEnd(errCatch);
-if (errCatch->gotError)
-    {
-    track->networkErrMsg = cloneString(errCatch->message->string);
+    if (startsWith("drs://", bigDataUrl))
+        {
+            bigDataUrl = signed_http_from_drs(bigDataUrl);
+        }
+
+    requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
+    checkAllowedBigDataUrlProtocols(bigDataUrl);
+
+    /* protect against temporary network error */
+    struct errCatch *errCatch = errCatchNew();
+    if (errCatchStart(errCatch))
+        {
+        char *db = ctGenomeOrCurrent(track);
+        track->bbiFile = bigBedFileOpenAlias(bigDataUrl, chromAliasChromToAliasHash(db));
+        }
+    errCatchEnd(errCatch);
+    if (errCatch->gotError)
+        {
+        track->networkErrMsg = cloneString(errCatch->message->string);
+        return track;
+        }
+    errCatchFree(&errCatch);
+
+    setBbiViewLimits(track);
+    track->dbTrackType = cloneString("bigBed");
+    track->fieldCount = track->bbiFile->definedFieldCount;
     return track;
-    }
-errCatchFree(&errCatch);
-
-setBbiViewLimits(track);
-track->dbTrackType = cloneString("bigBed");
-track->fieldCount = track->bbiFile->definedFieldCount;
-return track;
 }
 
 static struct customTrack *bigBarChartLoader(struct customFactory *fac,
@@ -2951,35 +2964,41 @@ static struct customTrack *bedTabixLoader(struct customFactory *fac, struct hash
 					  boolean dbRequested)
 /* Process the bedTabix track line. */
 {
-struct hash *settings = track->tdb->settingsHash;
-char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
-requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
-struct dyString *dyErr = dyStringNew(0);
-checkAllowedBigDataUrlProtocols(bigDataUrl);
-if (doExtraChecking)
-    {
-    /* protect against temporary network error */
-    struct errCatch *errCatch = errCatchNew();
-    if (errCatchStart(errCatch))
-	{
-	struct bedTabixFile *btf = bedTabixFileMayOpen(bigDataUrl, NULL, 0, 0);
-	if (btf == NULL)
-	    {
-            dyStringPrintf(dyErr, "Unable to open %s's bigDataUrl %s",
-			   track->tdb->shortLabel, bigDataUrl);
-	    }
-        else
-            bedTabixFileClose(&btf);
-	}
-    errCatchEnd(errCatch);
-    if (isNotEmpty(errCatch->message->string))
-	dyStringPrintf(dyErr, ": %s", errCatch->message->string);
-    errCatchFree(&errCatch);
-    }
-if (isNotEmpty(dyErr->string))
-    track->networkErrMsg = dyStringCannibalize(&dyErr);
-track->dbTrackType = cloneString("bedTabix");
-return track;
+    struct hash *settings = track->tdb->settingsHash;
+    char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
+
+    if (startsWith("drs://", bigDataUrl))
+        {
+            bigDataUrl = signed_http_from_drs(bigDataUrl);
+        }
+
+    requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
+    struct dyString *dyErr = dyStringNew(0);
+    checkAllowedBigDataUrlProtocols(bigDataUrl);
+    if (doExtraChecking)
+        {
+        /* protect against temporary network error */
+        struct errCatch *errCatch = errCatchNew();
+        if (errCatchStart(errCatch))
+      {
+      struct bedTabixFile *btf = bedTabixFileMayOpen(bigDataUrl, NULL, 0, 0);
+      if (btf == NULL)
+          {
+                dyStringPrintf(dyErr, "Unable to open %s's bigDataUrl %s",
+             track->tdb->shortLabel, bigDataUrl);
+          }
+            else
+                bedTabixFileClose(&btf);
+      }
+        errCatchEnd(errCatch);
+        if (isNotEmpty(errCatch->message->string))
+      dyStringPrintf(dyErr, ": %s", errCatch->message->string);
+        errCatchFree(&errCatch);
+        }
+    if (isNotEmpty(dyErr->string))
+        track->networkErrMsg = dyStringCannibalize(&dyErr);
+    track->dbTrackType = cloneString("bedTabix");
+    return track;
 }
 
 static struct customTrack *longTabixLoader(struct customFactory *fac, struct hash *chromHash,
@@ -3114,35 +3133,45 @@ static struct customTrack *bamLoader(struct customFactory *fac, struct hash *chr
 				     boolean dbRequested)
 /* Process the bam track line. */
 {
-struct hash *settings = track->tdb->settingsHash;
-char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
-char *bigDataIndexUrl = hashFindVal(settings, "bigDataIndex");
+    struct hash *settings = track->tdb->settingsHash;
+    char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
+    char *bigDataIndexUrl = hashFindVal(settings, "bigDataIndex");
 
-struct dyString *dyErr = dyStringNew(0);
-requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
+    if (startsWith("drs://", bigDataUrl))
+        {
+            bigDataUrl = signed_http_from_drs(bigDataUrl);
+        }
 
-checkAllowedBigDataUrlProtocols(bigDataUrl);
-if (bigDataIndexUrl != NULL)
-    checkAllowedBigDataUrlProtocols(bigDataIndexUrl);
+    if (startsWith("drs://", bigDataIndexUrl))
+        {
+            bigDataIndexUrl = signed_http_from_drs(bigDataIndexUrl);
+        }
 
-if (doExtraChecking)
-    {
-    /* protect against temporary network error */
-    struct errCatch *errCatch = errCatchNew();
-    if (errCatchStart(errCatch))
-	{
-	bamFileAndIndexMustExist(bigDataUrl, bigDataIndexUrl);
-	}
-    errCatchEnd(errCatch);
-    if (isNotEmpty(errCatch->message->string))
-	dyStringPrintf(dyErr, ": %s", errCatch->message->string);
-    errCatchFree(&errCatch);
+    struct dyString *dyErr = dyStringNew(0);
+    requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
 
-    }
-if (isNotEmpty(dyErr->string))
-    track->networkErrMsg = dyStringCannibalize(&dyErr);
-track->dbTrackType = cloneString("bam");
-return track;
+    checkAllowedBigDataUrlProtocols(bigDataUrl);
+    if (bigDataIndexUrl != NULL)
+        checkAllowedBigDataUrlProtocols(bigDataIndexUrl);
+
+    if (doExtraChecking)
+        {
+        /* protect against temporary network error */
+        struct errCatch *errCatch = errCatchNew();
+        if (errCatchStart(errCatch))
+      {
+      bamFileAndIndexMustExist(bigDataUrl, bigDataIndexUrl);
+      }
+        errCatchEnd(errCatch);
+        if (isNotEmpty(errCatch->message->string))
+      dyStringPrintf(dyErr, ": %s", errCatch->message->string);
+        errCatchFree(&errCatch);
+
+        }
+    if (isNotEmpty(dyErr->string))
+        track->networkErrMsg = dyStringCannibalize(&dyErr);
+    track->dbTrackType = cloneString("bam");
+    return track;
 }
 
 static struct customFactory bamFactory =
@@ -3163,61 +3192,64 @@ static boolean vcfTabixRecognizer(struct customFactory *fac, struct customPp *cp
 return (sameType(type, "vcfTabix") || sameType(type, "vcfPhasedTrio"));
 }
 
-static struct customTrack *vcfTabixLoader(struct customFactory *fac, struct hash *chromHash,
-					  struct customPp *cpp, struct customTrack *track,
-					  boolean dbRequested)
+static struct customTrack *vcfTabixLoader(struct customFactory *fac, struct hash *chromHash, struct customPp *cpp, struct customTrack *track, boolean dbRequested)
 /* Process the vcfTabix track line. */
 {
-struct hash *settings = track->tdb->settingsHash;
-char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
-char *bigDataIndexUrl = hashFindVal(settings, "bigDataIndex");
+    struct hash *settings = track->tdb->settingsHash;
+    char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
+    char *bigDataIndexUrl = hashFindVal(settings, "bigDataIndex");
 
-if (startsWith("drs://", bigDataUrl))
-    {
-        bigDataUrl = signed_http_from_drs(bigDataUrl);
-    }
+    if (startsWith("drs://", bigDataUrl))
+        {
+            bigDataUrl = signed_http_from_drs(bigDataUrl);
+        }
 
-requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
-struct dyString *dyErr = dyStringNew(0);
-checkAllowedBigDataUrlProtocols(bigDataUrl);
-if (bigDataIndexUrl)
-    checkAllowedBigDataUrlProtocols(bigDataIndexUrl);
+    if (startsWith("drs://", bigDataIndexUrl))
+        {
+            bigDataIndexUrl = signed_http_from_drs(bigDataIndexUrl);
+        }
 
-boolean isVcfPhasedTrio = sameString(hashFindVal(settings,"type"),"vcfPhasedTrio");
-if (isVcfPhasedTrio)
-    {
-    char *reqSampleName = hashFindVal(settings, VCF_PHASED_CHILD_SAMPLE_SETTING);
-    if (reqSampleName == NULL)
-        errAbort("Missing required setting '%s' from track line", VCF_PHASED_CHILD_SAMPLE_SETTING);
-    }
+    requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
+    struct dyString *dyErr = dyStringNew(0);
+    checkAllowedBigDataUrlProtocols(bigDataUrl);
+    if (bigDataIndexUrl)
+        checkAllowedBigDataUrlProtocols(bigDataIndexUrl);
 
-if (doExtraChecking)
-    {
-    /* protect against temporary network error */
-    int vcfMaxErr = 100;
-    struct errCatch *errCatch = errCatchNew();
-    if (errCatchStart(errCatch))
-	{
-	struct vcfFile *vcff = vcfTabixFileAndIndexMayOpen(bigDataUrl, bigDataIndexUrl, NULL, 0, 0, vcfMaxErr, -1);
-	if (vcff == NULL)
-	    {
-            dyStringPrintf(dyErr, "Unable to load and/or parse %s's bigDataUrl %s or its tabix index",
-			   track->tdb->shortLabel, bigDataUrl);
-	    }
-	vcfFileFree(&vcff);
-	}
-    errCatchEnd(errCatch);
-    if (isNotEmpty(errCatch->message->string))
-	dyStringPrintf(dyErr, ": %s", errCatch->message->string);
-    errCatchFree(&errCatch);
-    }
-if (isNotEmpty(dyErr->string))
-    track->networkErrMsg = dyStringCannibalize(&dyErr);
-if (isVcfPhasedTrio)
-    track->dbTrackType = cloneString("vcfPhasedTrio");
-else
-    track->dbTrackType = cloneString("vcfTabix");
-return track;
+    boolean isVcfPhasedTrio = sameString(hashFindVal(settings,"type"),"vcfPhasedTrio");
+    if (isVcfPhasedTrio)
+        {
+        char *reqSampleName = hashFindVal(settings, VCF_PHASED_CHILD_SAMPLE_SETTING);
+        if (reqSampleName == NULL)
+            errAbort("Missing required setting '%s' from track line", VCF_PHASED_CHILD_SAMPLE_SETTING);
+        }
+
+    if (doExtraChecking)
+        {
+        /* protect against temporary network error */
+        int vcfMaxErr = 100;
+        struct errCatch *errCatch = errCatchNew();
+        if (errCatchStart(errCatch))
+      {
+      struct vcfFile *vcff = vcfTabixFileAndIndexMayOpen(bigDataUrl, bigDataIndexUrl, NULL, 0, 0, vcfMaxErr, -1);
+      if (vcff == NULL)
+          {
+                dyStringPrintf(dyErr, "Unable to load and/or parse %s's bigDataUrl %s or its tabix index",
+             track->tdb->shortLabel, bigDataUrl);
+          }
+      vcfFileFree(&vcff);
+      }
+        errCatchEnd(errCatch);
+        if (isNotEmpty(errCatch->message->string))
+      dyStringPrintf(dyErr, ": %s", errCatch->message->string);
+        errCatchFree(&errCatch);
+        }
+    if (isNotEmpty(dyErr->string))
+        track->networkErrMsg = dyStringCannibalize(&dyErr);
+    if (isVcfPhasedTrio)
+        track->dbTrackType = cloneString("vcfPhasedTrio");
+    else
+        track->dbTrackType = cloneString("vcfTabix");
+    return track;
 }
 
 static struct customFactory vcfTabixFactory =
