@@ -4,6 +4,9 @@
 /* Copyright (C) 2014 The Regents of the University of California 
  * See kent/LICENSE or http://genome.ucsc.edu/license/ for licensing information. */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include "common.h"
 #include "errCatch.h"
@@ -1661,6 +1664,43 @@ struct customFactory interactFactory =
 /*********************/
 /**** hic Factory ****/
 
+char* concatenate(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 1024;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate("tnu drs access ", uri);
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+            results = concatenate(results, line);
+      }
+    }
+    pclose(fp);
+
+    return results;
+}
+
 static boolean hicRecognizer(struct customFactory *fac,
 	struct customPp *cpp, char *type,
     	struct customTrack *track)
@@ -1676,6 +1716,10 @@ static struct customTrack *hicLoader(struct customFactory *fac,
 {
 struct hash *settings = track->tdb->settingsHash;
 char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
+if (startsWith("drs://", bigDataUrl))
+    {
+        bigDataUrl = signed_http_from_drs(bigDataUrl);
+    }
 requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
 checkAllowedBigDataUrlProtocols(bigDataUrl);
 
