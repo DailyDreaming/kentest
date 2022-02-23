@@ -3172,6 +3172,11 @@ struct hash *settings = track->tdb->settingsHash;
 char *bigDataUrl = hashFindVal(settings, "bigDataUrl");
 char *bigDataIndexUrl = hashFindVal(settings, "bigDataIndex");
 
+if (startsWith("drs://", bigDataUrl))
+    {
+        bigDataUrl = signed_http_from_drs(bigDataUrl);
+    }
+
 requireBigDataUrl(bigDataUrl, fac->name, track->tdb->shortLabel);
 struct dyString *dyErr = dyStringNew(0);
 checkAllowedBigDataUrlProtocols(bigDataUrl);
