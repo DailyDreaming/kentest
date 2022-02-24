@@ -7387,7 +7387,7 @@ return (startsWith("big", track->tdb->type)
      && (track->subtracks == NULL);
 }
 
-char* concatenate(char * dest, char * source) {
+char* concatenate1(char * dest, char * source) {
     char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
 
     if (out != NULL) {
@@ -7398,7 +7398,7 @@ char* concatenate(char * dest, char * source) {
     return out;
 }
 
-char * signed_http_from_drs(char * uri) {
+char * signed_http_from_drs1(char * uri) {
     FILE *fp;
 
     int BUFF_SIZE = 16384;
@@ -7406,7 +7406,7 @@ char * signed_http_from_drs(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate("tnu drs access ", uri);
+    char* cmd = concatenate1("tnu drs access ", uri);
 //    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
 
 //    cmd = concatenate(cmd, " 2>&1");
@@ -7421,7 +7421,7 @@ char * signed_http_from_drs(char * uri) {
 
     /* Read the output a line at a time - output it. */
     while (fgets(line, size_line = sizeof(line), fp) != NULL) {
-          results = concatenate(results, line);
+          results = concatenate1(results, line);
       }
     }
     pclose(fp);
@@ -7440,7 +7440,7 @@ for (track = trackList; track != NULL; track = track->next)
     {
     if (startsWith("drs://", track))
         {
-            track = signed_http_from_drs(track);
+            track = signed_http_from_drs1(track);
         }
 
     if (track->visibility != tvHide)
