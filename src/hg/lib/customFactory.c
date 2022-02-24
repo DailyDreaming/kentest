@@ -1681,8 +1681,9 @@ char * signed_http_from_drs(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-//    char* cmd = concatenate("tnu drs access ", uri);
-    char* cmd = "which tnu";
+    char* cmd = concatenate("tnu drs access ", uri);
+
+    cmd = concatenate(cmd, " 2>&1");
 
     char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
 
