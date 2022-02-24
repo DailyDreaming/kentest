@@ -7387,6 +7387,49 @@ return (startsWith("big", track->tdb->type)
      && (track->subtracks == NULL);
 }
 
+char* concatenate(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 static void findLeavesForParallelLoad(struct track *trackList, struct paraFetchData **ppfdList)
 /* Find leaves of track tree that are remote network resources for parallel-fetch loading */
 {
@@ -7395,33 +7438,37 @@ if (!trackList)
     return;
 for (track = trackList; track != NULL; track = track->next)
     {
+    if (startsWith("drs://", track))
+        {
+            track = signed_http_from_drs(track);
+        }
 
     if (track->visibility != tvHide)
-	{
-	if (isTrackForParallelLoad(track))
-	    {
-	    struct paraFetchData *pfd;
-	    AllocVar(pfd);
-	    pfd->track = track;  // need pointer to be stable
-	    slAddHead(ppfdList, pfd);
-	    track->parallelLoading = TRUE;
-	    }
-	struct track *subtrack;
+        {
+        if (isTrackForParallelLoad(track))
+            {
+            struct paraFetchData *pfd;
+            AllocVar(pfd);
+            pfd->track = track;  // need pointer to be stable
+            slAddHead(ppfdList, pfd);
+            track->parallelLoading = TRUE;
+            }
+        struct track *subtrack;
         for (subtrack=track->subtracks; subtrack; subtrack=subtrack->next)
-	    {
-	    if (isTrackForParallelLoad(subtrack))
-		{
-		if (tdbVisLimitedByAncestors(cart,subtrack->tdb,TRUE,TRUE) != tvHide)
-		    {
-		    struct paraFetchData *pfd;
-		    AllocVar(pfd);
-		    pfd->track = subtrack;  // need pointer to be stable
-		    slAddHead(ppfdList, pfd);
-		    subtrack->parallelLoading = TRUE;
-		    }
-		}
-	    }
-	}
+            {
+            if (isTrackForParallelLoad(subtrack))
+                {
+                if (tdbVisLimitedByAncestors(cart,subtrack->tdb,TRUE,TRUE) != tvHide)
+                    {
+                    struct paraFetchData *pfd;
+                    AllocVar(pfd);
+                    pfd->track = subtrack;  // need pointer to be stable
+                    slAddHead(ppfdList, pfd);
+                    subtrack->parallelLoading = TRUE;
+                    }
+                }
+            }
+        }
     }
 }
 
