@@ -130,7 +130,7 @@ struct pipeline *pipelineOpenMem1(char **cmd, unsigned opts,
 /* like pipelineOpenMem(), only takes a single command */
 
 char *pipelineDesc(struct pipeline *pl);
-/* Get the desciption of a pipeline for use in error messages */
+/* Get the description of a pipeline for use in error messages */
 
 int pipelineFd(struct pipeline *pl);
 /* Get the file descriptor for a pipeline */
