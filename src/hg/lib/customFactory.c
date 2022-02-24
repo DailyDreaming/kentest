@@ -1676,7 +1676,7 @@ char* concatenate(char * dest, char * source) {
 char * signed_http_from_drs(char * uri) {
     FILE *fp;
 
-    int BUFF_SIZE = 1024;
+    int BUFF_SIZE = 16384;
 
     int size_line;
     char line[BUFF_SIZE];
@@ -1691,11 +1691,11 @@ char * signed_http_from_drs(char * uri) {
 
     /* Read the output a line at a time - output it. */
     while (fgets(line, size_line = sizeof(line), fp) != NULL) {
-            results = concatenate(results, line);
+          results = concatenate(results, line);
       }
     }
     pclose(fp);
-    /* errAbort("%s", results); */
+    errAbort("%s", results);
 
     return results;
 }
