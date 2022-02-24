@@ -3,6 +3,10 @@
 /* Copyright (C) 2014 The Regents of the University of California 
  * See kent/LICENSE or http://genome.ucsc.edu/license/ for licensing information. */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
 #include "common.h"
 #include "hash.h"
 #include "linefile.h"
@@ -29,6 +33,49 @@
 #include "hgBam.h"
 #include "hgConfig.h"
 
+char* concatenate3(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs3(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate3("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate3(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 boolean isBamTable(char *table)
 /* Return TRUE if table corresponds to a BAM file. */
 {
@@ -48,6 +95,10 @@ char *bamFileName(char *table, struct sqlConnection *conn, char *seqName)
 char *fileName = bigFileNameFromCtOrHub(table, conn);
 if (fileName == NULL)
     fileName = bamFileNameFromTable(conn, table, seqName);
+if (startsWith("drs://", fileName))
+        {
+        fileName = signed_http_from_drs3(fileName);
+        }
 return fileName;
 }
 
@@ -182,7 +233,20 @@ for (region = regionList; region != NULL && (maxOut > 0); region = region->next)
     {
     struct lm *lm = lmInit(0);
     char *fileName = bamFileName(table, conn, region->chrom);
+
+
+    if (startsWith("drs://", fileName))
+            {
+            fileName = signed_http_from_drs3(fileName);
+            }
+
     char *baiUrl = bigDataIndexFromCtOrHub(table, conn);
+
+
+    if (startsWith("drs://", baiUrl))
+            {
+            baiUrl = signed_http_from_drs3(baiUrl);
+            }
 
     struct samAlignment *sam, *samList = bamAndIndexFetchSamAlignmentPlus(fileName, baiUrl, region->chrom,
     	region->start, region->end, lm, refUrl, cacheDir);
@@ -267,6 +331,10 @@ static void addFilteredBedsOnRegion(char *fileName, struct region *region,
 	struct hash *idHash, int *pMaxOut)
 /* Add relevant beds in reverse order to pBedList */
 {
+if (startsWith("drs://", fileName))
+        {
+        fileName = signed_http_from_drs3(fileName);
+        }
 struct lm *lm = lmInit(0);
 struct trackDb *tdb = findTdbForTable(database, curTrack, curTable, ctLookupName);
 char *cacheDir =  cfgOption("cramRef");
@@ -316,6 +384,10 @@ struct region *region;
 for (region = regionList; region != NULL; region = region->next)
     {
     char *fileName = bamFileName(table, conn, region->chrom);
+    if (startsWith("drs://", fileName))
+        {
+        fileName = signed_http_from_drs3(fileName);
+        }
     addFilteredBedsOnRegion(fileName, region, table, filter, lm, &bedList, idHash, &maxOut);
     freeMem(fileName);
     if (maxOut <= 0)
@@ -328,48 +400,7 @@ slReverse(&bedList);
 return bedList;
 }
 
-char* concatenate3(char * dest, char * source) {
-    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
 
-    if (out != NULL) {
-            strcat(out, dest);
-            strcat(out, source);
-    }
-
-    return out;
-}
-
-char * signed_http_from_drs3(char * uri) {
-    FILE *fp;
-
-    int BUFF_SIZE = 16384;
-
-    int size_line;
-    char line[BUFF_SIZE];
-
-    char* cmd = concatenate3("tnu drs access ", uri);
-//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
-
-//    cmd = concatenate(cmd, " 2>&1");
-
-    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
-
-    /* Open the command for reading. */
-    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
-    setenv("WORKSPACE_NAME", "scratch-lon", 1);
-    fp = popen(cmd, "r");
-    if (fp != NULL) {
-
-    /* Read the output a line at a time - output it. */
-    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
-          results = concatenate3(results, line);
-      }
-    }
-    pclose(fp);
-//    errAbort("%s", results);
-
-    return results;
-}
 
 struct slName *randomBamIds(char *table, struct sqlConnection *conn, int count)
 /* Return some semi-random qName based IDs from a BAM file. */
