@@ -7438,13 +7438,13 @@ if (!trackList)
     return;
 for (track = trackList; track != NULL; track = track->next)
     {
-    if (startsWith("drs://", track))
-        {
-            track = signed_http_from_drs1(track);
-        }
 
     if (track->visibility != tvHide)
         {
+        if (startsWith("drs://", track))
+            {
+                track = signed_http_from_drs1(track);
+            }
         if (isTrackForParallelLoad(track))
             {
             struct paraFetchData *pfd;
@@ -7456,6 +7456,10 @@ for (track = trackList; track != NULL; track = track->next)
         struct track *subtrack;
         for (subtrack=track->subtracks; subtrack; subtrack=subtrack->next)
             {
+            if (startsWith("drs://", subtrack))
+                {
+                    subtrack = signed_http_from_drs1(subtrack);
+                }
             if (isTrackForParallelLoad(subtrack))
                 {
                 if (tdbVisLimitedByAncestors(cart,subtrack->tdb,TRUE,TRUE) != tvHide)
