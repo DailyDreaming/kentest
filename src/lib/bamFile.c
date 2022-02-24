@@ -3,6 +3,10 @@
 /* Copyright (C) 2014 The Regents of the University of California 
  * See kent/LICENSE or http://genome.ucsc.edu/license/ for licensing information. */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
 #include "common.h"
 #include "portable.h"
 #include "bamFile.h"
@@ -16,6 +20,49 @@
 
 // If KNETFILE_HOOKS is used (as recommended!), then we can simply call bam_index_load
 // without worrying about the samtools lib creating local cache files in cgi-bin:
+
+char* concatenate2(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs2(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate2("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate2(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
 
 static bam_index_t *bamOpenIndexGivenUrl(samfile_t *sam, char *fileOrUrl, char *baiFileOrUrl)
 /* If fileOrUrl has a valid accompanying .bai file, parse and return the index;
@@ -84,10 +131,10 @@ if (fh != NULL)
     bam_index_t *idx = bamOpenIdx(fh, bamFileName);
     samclose(fh);
     if (idx == NULL)
-	{
-	warn("bamFileExists: failed to read index corresponding to %s", bamFileName);
-	return FALSE;
-	}
+    {
+    warn("bamFileExists: failed to read index corresponding to %s", bamFileName);
+    return FALSE;
+    }
     bamCloseIdx(&idx);
     bamClose(&fh);
     return TRUE;
@@ -117,11 +164,9 @@ if (fh == NULL)
     boolean usingUrl = (strstr(fileOrUrl, "tp://") || strstr(fileOrUrl, "https://"));
     struct dyString *urlWarning = dyStringNew(0);
     if (usingUrl && fh == NULL)
-	{
-	dyStringAppend(urlWarning,
-		       ". If you are able to access the URL with your web browser, "
-		       "please try reloading this page.");
-	}
+        {
+        dyStringAppend(urlWarning, ". If you are able to access the URL with your web browser, please try reloading this page.");
+        }
     errAbort("Failed to open %s%s", fileOrUrl, urlWarning->string);
     }
 return fh;
@@ -167,7 +212,7 @@ bamClose(&bamF);
 }
 
 void bamFetchAlreadyOpen(samfile_t *samfile, bam_hdr_t *header,  bam_index_t *idx, char *bamFileName, 
-			 char *position, bam_fetch_f callbackFunc, void *callbackData)
+             char *position, bam_fetch_f callbackFunc, void *callbackData)
 /* With the open bam file, return items the same way with the callbacks as with bamFetch() */
 /* except in this case use an already-open bam file and index (use bam_index_load and free() for */
 /* the index). It seems a little strange to pass the filename in with the open bam, but */
@@ -239,7 +284,7 @@ if (samfile->format.format == cram)
 }
 
 void bamAndIndexFetchPlus(char *fileOrUrl, char *baiFileOrUrl, char *position, bam_fetch_f callbackFunc, void *callbackData,
-		 samfile_t **pSamFile, char *refUrl, char *cacheDir)
+         samfile_t **pSamFile, char *refUrl, char *cacheDir)
 /* Open the .bam file with the .bai index specified by baiFileOrUrl.
  * baiFileOrUrl can be NULL and defaults to <fileOrUrl>.bai.
  * Fetch items in the seq:start-end position range,
@@ -326,13 +371,13 @@ return itemCount;
 }
 
 void bamFetchPlus(char *fileOrUrl, char *position, bam_fetch_f callbackFunc, void *callbackData,
-		 samfile_t **pSamFile, char *refUrl, char *cacheDir)
+         samfile_t **pSamFile, char *refUrl, char *cacheDir)
 {
 bamAndIndexFetchPlus(fileOrUrl, NULL, position, callbackFunc, callbackData, pSamFile, refUrl, cacheDir);
 }
 
 void bamFetch(char *fileOrUrl, char *position, bam_fetch_f callbackFunc, void *callbackData,
-		 samfile_t **pSamFile)
+         samfile_t **pSamFile)
 {
 bamFetchPlus(fileOrUrl, position, callbackFunc, callbackData, pSamFile,
     NULL, NULL);
@@ -449,52 +494,52 @@ for (i = 0;  i < core->n_cigar;  i++)
     char op;
     int n = bamUnpackCigarElement(cigarPacked[i], &op);
     if (i > 0)
-	printf(", ");
+    printf(", ");
     switch (op)
-	{
-	case 'M': // match or mismatch (gapless aligned block)
-	    printf("%d (mis)Match", n);
-	    break;
-	case '=': // match
-	    printf("%d Match", n);
-	    break;
-	case 'X': // mismatch
-	    printf("%d Mismatch", n);
-	    break;
-	case 'I': // inserted in query
-	    printf("%d Insertion", n);
-	    break;
-	case 'S': // skipped query bases at beginning or end ("soft clipping")
-	    printf("%d Skipped", n);
-	    break;
-	case 'D': // deleted from query
-	    printf("%d Deletion", n);
-	    break;
-	case 'N': // long deletion from query (intron as opposed to small del)
-	    printf("%d deletioN", n);
-	    break;
-	case 'H': // skipped query bases not stored in record's query sequence ("hard clipping")
-	    printf("%d Hard clipped query", n);
-	    break;
-	case 'P': // P="silent deletion from padded reference sequence"
-	    printf("%d Padded / silent deletion", n);
-	    break;
-	default:
-	    errAbort("bamShowCigarEnglish: unrecognized CIGAR op %c -- update me", op);
-	}
+    {
+    case 'M': // match or mismatch (gapless aligned block)
+        printf("%d (mis)Match", n);
+        break;
+    case '=': // match
+        printf("%d Match", n);
+        break;
+    case 'X': // mismatch
+        printf("%d Mismatch", n);
+        break;
+    case 'I': // inserted in query
+        printf("%d Insertion", n);
+        break;
+    case 'S': // skipped query bases at beginning or end ("soft clipping")
+        printf("%d Skipped", n);
+        break;
+    case 'D': // deleted from query
+        printf("%d Deletion", n);
+        break;
+    case 'N': // long deletion from query (intron as opposed to small del)
+        printf("%d deletioN", n);
+        break;
+    case 'H': // skipped query bases not stored in record's query sequence ("hard clipping")
+        printf("%d Hard clipped query", n);
+        break;
+    case 'P': // P="silent deletion from padded reference sequence"
+        printf("%d Padded / silent deletion", n);
+        break;
+    default:
+        errAbort("bamShowCigarEnglish: unrecognized CIGAR op %c -- update me", op);
+    }
     }
 }
 
 static void descFlag(unsigned flag, unsigned bitMask, char *desc, boolean makeRed,
-	      boolean *retFirst)
+          boolean *retFirst)
 /* Describe a flag bit (or multi-bit mask) if it is set in flag. */
 {
 if ((flag & bitMask) == bitMask) // *all* bits in bitMask are set in flag
     {
     if (!*retFirst)
-	printf(" | ");
+    printf(" | ");
     printf("<span%s>(<TT>0x%02x</TT>) %s</span>",
-	   (makeRed ? " style='color: red'" : ""), bitMask, desc);
+       (makeRed ? " style='color: red'" : ""), bitMask, desc);
     *retFirst = FALSE;
     }
 }
@@ -533,25 +578,25 @@ for (i = 0;  i < core->n_cigar;  i++)
     char op;
     int n = bamUnpackCigarElement(cigarPacked[i], &op);
     switch (op)
-	{
-	case 'M': // match or mismatch (gapless aligned block)
-	case '=': // match
-	case 'X': // mismatch
-	    tLength += n;
-	    break;
-	case 'I': // inserted in query
-	    break;
-	case 'D': // deleted from query
-	case 'N': // long deletion from query (intron as opposed to small del)
-	    tLength += n;
-	    break;
-	case 'S': // skipped query bases at beginning or end ("soft clipping")
-	case 'H': // skipped query bases not stored in record's query sequence ("hard clipping")
-	case 'P': // P="silent deletion from padded reference sequence" -- ignore these.
-	    break;
-	default:
-	    errAbort("bamGetTargetLength: unrecognized CIGAR op %c -- update me", op);
-	}
+    {
+    case 'M': // match or mismatch (gapless aligned block)
+    case '=': // match
+    case 'X': // mismatch
+        tLength += n;
+        break;
+    case 'I': // inserted in query
+        break;
+    case 'D': // deleted from query
+    case 'N': // long deletion from query (intron as opposed to small del)
+        tLength += n;
+        break;
+    case 'S': // skipped query bases at beginning or end ("soft clipping")
+    case 'H': // skipped query bases not stored in record's query sequence ("hard clipping")
+    case 'P': // P="silent deletion from padded reference sequence" -- ignore these.
+        break;
+    default:
+        errAbort("bamGetTargetLength: unrecognized CIGAR op %c -- update me", op);
+    }
     }
 return tLength;
 }
@@ -645,38 +690,38 @@ while (s < bam->data + bam->data_len)
     key[0] = s[0]; key[1] = s[1];
     s += 2; type = *s; ++s;
     if (key[0] == tag[0] && key[1] == tag[1])
-	{
-	if (type == 'A') { snprintf(buf, bufSize, "%c", *s);}
-	else if (type == 'C') { snprintf(buf, bufSize, "%u", *s); }
-	else if (type == 'c') { snprintf(buf, bufSize, "%d", *s); }
-	else if (type == 'S') { snprintf(buf, bufSize, "%u", *(uint16_t*)s); }
-	else if (type == 's') { snprintf(buf, bufSize, "%d", *(int16_t*)s); }
-	else if (type == 'I') { snprintf(buf, bufSize, "%u", *(uint32_t*)s); }
-	else if (type == 'i') { snprintf(buf, bufSize, "%d", *(int32_t*)s); }
-	else if (type == 'f') { snprintf(buf, bufSize, "%g", *(float*)s); }
-	else if (type == 'd') { snprintf(buf, bufSize, "%lg", *(double*)s); }
-	else if (type == 'Z' || type == 'H') strncpy(buf, (char *)s, bufSize);
-	else buf[0] = '\0';
-	buf[bufSize-1] = '\0'; // TODO: is this nec?? see man pages
-	val = buf;
-	break;
-	}
+    {
+    if (type == 'A') { snprintf(buf, bufSize, "%c", *s);}
+    else if (type == 'C') { snprintf(buf, bufSize, "%u", *s); }
+    else if (type == 'c') { snprintf(buf, bufSize, "%d", *s); }
+    else if (type == 'S') { snprintf(buf, bufSize, "%u", *(uint16_t*)s); }
+    else if (type == 's') { snprintf(buf, bufSize, "%d", *(int16_t*)s); }
+    else if (type == 'I') { snprintf(buf, bufSize, "%u", *(uint32_t*)s); }
+    else if (type == 'i') { snprintf(buf, bufSize, "%d", *(int32_t*)s); }
+    else if (type == 'f') { snprintf(buf, bufSize, "%g", *(float*)s); }
+    else if (type == 'd') { snprintf(buf, bufSize, "%lg", *(double*)s); }
+    else if (type == 'Z' || type == 'H') strncpy(buf, (char *)s, bufSize);
+    else buf[0] = '\0';
+    buf[bufSize-1] = '\0'; // TODO: is this nec?? see man pages
+    val = buf;
+    break;
+    }
     else
-	{
-	if (type == 'A' || type == 'C' || type == 'c') { ++s; }
-	else if (type == 'S' || type == 's') { s += 2; }
-	else if (type == 'I' || type == 'i' || type == 'f') { s += 4; }
-	else if (type == 'd') { s += 8; }
-	else if (type == 'B') 
+    {
+    if (type == 'A' || type == 'C' || type == 'c') { ++s; }
+    else if (type == 'S' || type == 's') { s += 2; }
+    else if (type == 'I' || type == 'i' || type == 'f') { s += 4; }
+    else if (type == 'd') { s += 8; }
+    else if (type == 'B') 
             {
             // 5 is for type byte and a following int32
             s += 5 + typeSize(*(s)) * (*(int32_t*)((s)+1));
             }
-	else if (type == 'Z' || type == 'H')
-	    {
-	    while (*s++);
-	    }
-	}
+    else if (type == 'Z' || type == 'H')
+        {
+        while (*s++);
+        }
+    }
     }
 return val;
 }
@@ -709,10 +754,10 @@ while (s < bam->data + bam->data_len)
     else if (type == 'f') { dyStringPrintf(dy, "%g", *(float*)s); s += 4; }
     else if (type == 'd') { dyStringPrintf(dy, "%lg", *(double*)s); s += 8; }
     else if (type == 'Z' || type == 'H')
-	{
-	dyStringAppend(dy, (char *)s);
-	s += strlen((char *)s) + 1;
-	}
+    {
+    dyStringAppend(dy, (char *)s);
+    s += strlen((char *)s) + 1;
+    }
     }
 }
 
@@ -744,40 +789,40 @@ for (i = 0;  i < core->n_cigar;  i++)
     char op;
     int n = bamUnpackCigarElement(cigar[i], &op);
     switch (op)
-	{
-	case 'X': // mismatch (gapless aligned block)
-	case '=': // match (gapless aligned block)
-	case 'M': // match or mismatch (gapless aligned block)
-	    blockSizes[blockCount] = n;
-	    qStarts[blockCount] = qPos;
-	    tStarts[blockCount] = tPos;
-	    blockCount++;
-	    tPos += n;
-	    qPos += n;
-	    qLength += n;
+    {
+    case 'X': // mismatch (gapless aligned block)
+    case '=': // match (gapless aligned block)
+    case 'M': // match or mismatch (gapless aligned block)
+        blockSizes[blockCount] = n;
+        qStarts[blockCount] = qPos;
+        tStarts[blockCount] = tPos;
+        blockCount++;
+        tPos += n;
+        qPos += n;
+        qLength += n;
             if (op == 'X')
                psl->misMatch += n;
             else
                psl->match += n;
-	    break;
-	case 'I': // inserted in query
-	    qPos += n;
-	    qLength += n;
-	    break;
-	case 'D': // deleted from query
-	case 'N': // long deletion from query (intron as opposed to small del)
-	    tPos += n;
-	    break;
-	case 'S': // skipped query bases at beginning or end ("soft clipping")
-	    qPos += n;
-	    qLength += n;
-	    break;
-	case 'H': // skipped query bases not stored in record's query sequence ("hard clipping")
-	case 'P': // P="silent deletion from padded reference sequence" -- ignore these.
-	    break;
-	default:
-	    errAbort("bamToPsl: unrecognized CIGAR op %c -- update me", op);
-	}
+        break;
+    case 'I': // inserted in query
+        qPos += n;
+        qLength += n;
+        break;
+    case 'D': // deleted from query
+    case 'N': // long deletion from query (intron as opposed to small del)
+        tPos += n;
+        break;
+    case 'S': // skipped query bases at beginning or end ("soft clipping")
+        qPos += n;
+        qLength += n;
+        break;
+    case 'H': // skipped query bases not stored in record's query sequence ("hard clipping")
+    case 'P': // P="silent deletion from padded reference sequence" -- ignore these.
+        break;
+    default:
+        errAbort("bamToPsl: unrecognized CIGAR op %c -- update me", op);
+    }
     }
 
 if (blockCount == 0)

@@ -328,11 +328,59 @@ slReverse(&bedList);
 return bedList;
 }
 
+char* concatenate2(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs2(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate2("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate2(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 struct slName *randomBamIds(char *table, struct sqlConnection *conn, int count)
 /* Return some semi-random qName based IDs from a BAM file. */
 {
 /* Read 10000 items from bam file,  or if they ask for a big list, then 4x what they ask for. */
 char *fileName = bamFileName(table, conn, NULL);
+
+if (startsWith("drs://", fileName))
+    {
+    fileName = signed_http_from_drs2(fileName);
+    }
 
 samfile_t *fh = bamOpen(fileName, NULL);
 struct lm *lm = lmInit(0);
@@ -370,6 +418,11 @@ struct sqlConnection *conn = NULL;
 if (!trackHubDatabase(database))
     conn = hAllocConn(database);
 char *fileName = bamFileName(table, conn, NULL);
+
+if (startsWith("drs://", fileName))
+    {
+    fileName = signed_http_from_drs2(fileName);
+    }
 
 struct asObject *as = bamAsObj();
 hPrintf("<B>Database:</B> %s", database);
