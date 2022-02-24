@@ -1681,10 +1681,10 @@ char * signed_http_from_drs(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-//    char* cmd = concatenate("tnu drs access ", uri);
-    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+    char* cmd = concatenate("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
 
-//    cmd = concatenate(cmd, " 2>&1");
+    cmd = concatenate(cmd, " 2>&1");
 
     char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
 
