@@ -1695,7 +1695,7 @@ char * signed_http_from_drs(char * uri) {
       }
     }
     pclose(fp);
-    errAbort("%s", results);
+    /* errAbort("%s", results); */
 
     return results;
 }
