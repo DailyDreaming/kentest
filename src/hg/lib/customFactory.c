@@ -1689,6 +1689,8 @@ char * signed_http_from_drs(char * uri) {
     char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
 
     /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
     fp = popen(cmd, "r");
     if (fp != NULL) {
 
