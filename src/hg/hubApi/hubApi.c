@@ -179,6 +179,48 @@ for ( ; el != NULL; el = el->next )
     }
 return list;
 }
+char* concatenate10(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs10(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate10("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate10(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
 
 static boolean timeOutReached()
 /* see if the timeout has been reached to determine if an exit
@@ -381,6 +423,16 @@ static int bbiBriefMeasure(char *type, char *bigDataUrl, char *bigDataIndex, lon
  *   name of largest chrom and its size
  */
 {
+
+    if (startsWith("drs://", bigDataUrl))
+            {
+                bigDataUrl = signed_http_from_drs10(bigDataUrl);
+            }
+
+    if (startsWith("drs://", bigDataIndex))
+            {
+                bigDataIndex = signed_http_from_drs10(bigDataIndex);
+            }
 int retVal = 0;
 *chromCount = 0;
 *itemCount = 0;
@@ -499,9 +551,17 @@ if (tdb->subtracks)
 	    {
             char *bigDataIndex = NULL;
             char *relIdxUrl = trackDbSetting(tdbEl, "bigDataIndex");
+            if (startsWith("drs://", relIdxUrl))
+                    {
+                        relIdxUrl = signed_http_from_drs10(relIdxUrl);
+                    }
             if (relIdxUrl != NULL)
                 bigDataIndex = trackHubRelativeUrl(hub->genomeList->trackDbFile, relIdxUrl);
             char *bigDataUrl = trackDbSetting(tdbEl, "bigDataUrl");
+            if (startsWith("drs://", bigDataUrl))
+                    {
+                        bigDataUrl = signed_http_from_drs10(bigDataUrl);
+                    }
             char *longName = NULL;
             unsigned longSize = 0;
             struct dyString *errors = newDyString(1024);
@@ -596,6 +656,10 @@ static void hubCountOneTdb(struct trackHub *hub, char *db, struct trackDb *tdb,
     unsigned chromSize, char *genome)
 {
 char *bigDataUrl = trackDbSetting(tdb, "bigDataUrl");
+if (startsWith("drs://", bigDataUrl))
+    {
+        bigDataUrl = signed_http_from_drs10(bigDataUrl);
+    }
 boolean compositeContainer = tdbIsComposite(tdb);
 boolean compositeView = tdbIsCompositeView(tdb);
 boolean superChild = tdbIsSuperTrackChild(tdb);
@@ -680,6 +744,10 @@ static void countOneTdb(char *db, struct trackDb *tdb,
 /* for this tdb in this db, count it up and provide a sample */
 {
 char *bigDataUrl = trackDbSetting(tdb, "bigDataUrl");
+if (startsWith("drs://", bigDataUrl))
+        {
+            bigDataUrl = signed_http_from_drs10(bigDataUrl);
+        }
 boolean compositeContainer = tdbIsComposite(tdb);
 boolean compositeView = tdbIsCompositeView(tdb);
 boolean superChild = tdbIsSuperTrackChild(tdb);

@@ -7374,10 +7374,10 @@ static boolean isTrackForParallelLoad(struct track *track)
 /* Is this a track that should be loaded in parallel ? */
 {
 char *bdu = trackDbSetting(track->tdb, "bigDataUrl");
-if (startsWith("drs://", bdu))
-    {
-        bdu = signed_http_from_drs1(bdu);
-    }
+//if (startsWith("drs://", bdu))
+//    {
+//        bdu = signed_http_from_drs1(bdu);
+//    }
 return (startsWith("big", track->tdb->type)
      || startsWithWord("mathWig"  , track->tdb->type)
      || startsWithWord("bam"     , track->tdb->type)

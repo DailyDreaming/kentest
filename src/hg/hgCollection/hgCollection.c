@@ -75,6 +75,49 @@ for(;; count++)
 return NULL;
 }
 
+char* concatenate8(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs8(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate8("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate8(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 static char *makeUniqueName(struct hash *nameHash, char *name)
 // Make the name of this track unique.
 {
@@ -686,6 +729,10 @@ if ((tdb->grp == NULL) || (hubName == NULL) || differentString(tdb->grp, hubName
         hashStore(collectionNameHash,  tdb->track);
 
     char *bigDataUrl = trackDbSetting(tdb, "bigDataUrl");
+    if (startsWith("drs://", bigDataUrl))
+            {
+                bigDataUrl = signed_http_from_drs8(bigDataUrl);
+            }
     if (bigDataUrl == NULL)
         {
         char *table = trackDbSetting(tdb, "table");
