@@ -229,14 +229,12 @@ if (isEmpty(bigDataUrl))
     struct dyString *doc = dyStringNew(0);
     char *docUrl = bigDataDocPath(type);
     if (docUrl != NULL)
-	dyStringPrintf(doc, "  For more information about the bigDataUrl setting, see "
-		       "<A HREF=\"%s\" TARGET=_BLANK>%s custom track documentation</A>.",
-		       docUrl, type);
-    errAbort("Missing bigDataUrl setting from track of type=%s (%s).  "
+	      dyStringPrintf(doc, "  For more information about the bigDataUrl setting, see <A HREF=\"%s\" TARGET=_BLANK>%s custom track documentation</A>.", docUrl, type);
+        errAbort("Missing bigDataUrl setting from track of type=%s (%s).  "
 	     "Please check for case and spelling and that there is no new-line "
 	     "between the 'track' and the 'bigDataUrl' if the bigDataUrl appears to be there."
-	     "%s",
-	     type, trackName, doc->string);
+	     "%s , %s",
+	     type, trackName, doc->string, bigDataUrl);
     }
 }
 /*** BED Factory ***/
@@ -1697,13 +1695,13 @@ char * signed_http_from_drs(char * uri) {
       }
     }
     pclose(fp);
+    errAbort("%s", results);
 
     return results;
 }
 
 static boolean hicRecognizer(struct customFactory *fac,
-	struct customPp *cpp, char *type,
-    	struct customTrack *track)
+    struct customPp *cpp, char *type, struct customTrack *track)
 /* Return TRUE if looks like we're handling a hic track */
 {
 return (sameType(type, "hic"));
