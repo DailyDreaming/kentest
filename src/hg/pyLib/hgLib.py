@@ -922,11 +922,8 @@ def findJsEvent(event):
 
 def checkValidEvent(event):
     " check if it is lowercase and a known valid event name "
-    # TODO GALT
-    temp = event.lower()
-    if temp != event:
+    if event.lower() != event:
         warn("jsInline: javascript event %s should be given in lower-case", event)
-    event = temp; 
     if not findJsEvent(event):
         warn("jsInline: unknown javascript event %s", event)
 

@@ -235,8 +235,8 @@ if (isEmpty(bigDataUrl))
     errAbort("Missing bigDataUrl setting from track of type=%s (%s).  "
 	     "Please check for case and spelling and that there is no new-line "
 	     "between the 'track' and the 'bigDataUrl' if the bigDataUrl appears to be there."
-	     "%s",
-	     type, trackName, doc->string);
+	     "%s , %s",
+	     type, trackName, doc->string, bigDataUrl);
     }
 }
 /*** BED Factory ***/
