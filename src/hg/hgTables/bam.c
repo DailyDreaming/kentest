@@ -328,7 +328,7 @@ slReverse(&bedList);
 return bedList;
 }
 
-char* concatenate2(char * dest, char * source) {
+char* concatenate3(char * dest, char * source) {
     char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
 
     if (out != NULL) {
@@ -339,7 +339,7 @@ char* concatenate2(char * dest, char * source) {
     return out;
 }
 
-char * signed_http_from_drs2(char * uri) {
+char * signed_http_from_drs3(char * uri) {
     FILE *fp;
 
     int BUFF_SIZE = 16384;
@@ -347,7 +347,7 @@ char * signed_http_from_drs2(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate2("tnu drs access ", uri);
+    char* cmd = concatenate3("tnu drs access ", uri);
 //    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
 
 //    cmd = concatenate(cmd, " 2>&1");
@@ -362,7 +362,7 @@ char * signed_http_from_drs2(char * uri) {
 
     /* Read the output a line at a time - output it. */
     while (fgets(line, size_line = sizeof(line), fp) != NULL) {
-          results = concatenate2(results, line);
+          results = concatenate3(results, line);
       }
     }
     pclose(fp);
@@ -379,7 +379,7 @@ char *fileName = bamFileName(table, conn, NULL);
 
 if (startsWith("drs://", fileName))
     {
-    fileName = signed_http_from_drs2(fileName);
+    fileName = signed_http_from_drs3(fileName);
     }
 
 samfile_t *fh = bamOpen(fileName, NULL);
@@ -421,7 +421,7 @@ char *fileName = bamFileName(table, conn, NULL);
 
 if (startsWith("drs://", fileName))
     {
-    fileName = signed_http_from_drs2(fileName);
+    fileName = signed_http_from_drs3(fileName);
     }
 
 struct asObject *as = bamAsObj();
