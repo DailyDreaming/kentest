@@ -7374,6 +7374,10 @@ static boolean isTrackForParallelLoad(struct track *track)
 /* Is this a track that should be loaded in parallel ? */
 {
 char *bdu = trackDbSetting(track->tdb, "bigDataUrl");
+if (startsWith("drs://", bdu))
+    {
+        bdu = signed_http_from_drs1(bdu);
+    }
 return (startsWith("big", track->tdb->type)
      || startsWithWord("mathWig"  , track->tdb->type)
      || startsWithWord("bam"     , track->tdb->type)
@@ -7440,11 +7444,12 @@ for (track = trackList; track != NULL; track = track->next)
     {
     if (track->visibility != tvHide)
         {
-        if (startsWith("drs://", track))
-            {
-                track = signed_http_from_drs1(track);
-            }
-        if (isTrackForParallelLoad(track)) && (startsWith("http://", track) || startsWith("https://", track) || startsWith("ftp://", track))
+//        char *bdu = trackDbSetting(track->tdb, "bigDataUrl");
+//        if (startsWith("drs://", track))
+//            {
+//                track = signed_http_from_drs1(track);
+//            }
+        if (isTrackForParallelLoad(track))
             {
             struct paraFetchData *pfd;
             AllocVar(pfd);
@@ -7455,11 +7460,12 @@ for (track = trackList; track != NULL; track = track->next)
         struct track *subtrack;
         for (subtrack=track->subtracks; subtrack; subtrack=subtrack->next)
             {
-            if (startsWith("drs://", subtrack))
-                {
-                    subtrack = signed_http_from_drs1(subtrack);
-                }
-            if (isTrackForParallelLoad(subtrack)) && (startsWith("http://", track) || startsWith("https://", track) || startsWith("ftp://", track))
+//            char *bdu = trackDbSetting(track->tdb, "bigDataUrl");
+//            if (startsWith("drs://", subtrack))
+//                {
+//                    subtrack = signed_http_from_drs1(subtrack);
+//                }
+            if (isTrackForParallelLoad(subtrack))
                 {
                 if (tdbVisLimitedByAncestors(cart,subtrack->tdb,TRUE,TRUE) != tvHide)
                     {

@@ -23,6 +23,49 @@ static int hicTotalHeight(struct track *tg, enum trackVisibility vis)
 {
 int maxHeight = 0;
 
+char* concatenate4(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs4(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate4("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate4(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 struct track *trackScan = tg;
 while (trackScan != NULL) // Canvas max height for this and previous windows ...
     {
@@ -45,11 +88,62 @@ if ( tg->visibility == tvDense)
 return maxHeight;
 }
 
+char* concatenate7(char * dest, char * source) {
+    char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
+
+    if (out != NULL) {
+            strcat(out, dest);
+            strcat(out, source);
+    }
+
+    return out;
+}
+
+char * signed_http_from_drs7(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate7("tnu drs access ", uri);
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate7(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 struct hicMeta *grabHeader(struct track *tg)
 /* Fetch a hicMeta structure that describes the Hi-C data associated with
  * the track. */
 {
 char *filename = trackDbSettingOrDefault(tg->tdb, "bigDataUrl", NULL);
+
+if (startsWith("drs://", filename))
+        {
+            filename = signed_http_from_drs(filename);
+        }
+
+
+
 struct hicMeta *metaResult = NULL;
 if (filename == NULL)
     {
@@ -152,6 +246,10 @@ void hicLoadItems(struct track *tg)
 /* Load Hi-C items in (mostly) interact format */
 {
 char *filename = trackDbSettingOrDefault(tg->tdb, "bigDataUrl", NULL);
+if (startsWith("drs://", filename))
+            {
+                filename = signed_http_from_drs7(filename);
+            }
 if (filename == NULL)
     return;
 if (tg->customPt == NULL)
