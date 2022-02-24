@@ -183,9 +183,10 @@ if (startsWith(trashDir(), url) ||
 char *prefix = cfgOption("udc.localDir");
 if (prefix == NULL)
     {
-    if (doAbort)
-        errAbort("Only network protocols http, https, or ftp allowed in bigDataUrl: '%s'", url);
     return FALSE;
+//    if (doAbort)
+//        errAbort("Only network protocols http, https, or ftp allowed in bigDataUrl: '%s'", url);
+//    return FALSE;
     }
 
 if (!startsWith(prefix, url))
