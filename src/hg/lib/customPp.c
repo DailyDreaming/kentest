@@ -124,7 +124,7 @@ char * signed_http_from_drs(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate("python3 -m tnu drs access ", uri);
+    char* cmd = concatenate("tnu drs access ", uri);
 
     char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
 
