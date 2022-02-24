@@ -1682,7 +1682,7 @@ char * signed_http_from_drs(char * uri) {
     char line[BUFF_SIZE];
 
 //    char* cmd = concatenate("tnu drs access ", uri);
-    char* cmd = concatenate("python -c 'import terra_notebook_utils; print(terra_notebook_utils.config.CLIConfig.path)'", " 2>&1");
+    char* cmd = concatenate("python3 -c 'import terra_notebook_utils; print(terra_notebook_utils.config.CLIConfig.path)'", " 2>&1");
 
 //    cmd = concatenate(cmd, " 2>&1");
 
