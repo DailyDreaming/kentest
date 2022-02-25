@@ -309,9 +309,9 @@ if (startsWith("drs://", fileOrUrl))
         fileOrUrl = signed_http_from_drs2(fileOrUrl);
         }
 
-if (startsWith("drs://", bamFileName))
+if (startsWith("drs://", baiFileOrUrl))
         {
-        fileOrUrl = signed_http_from_drs2(fileOrUrl);
+        baiFileOrUrl = signed_http_from_drs2(baiFileOrUrl);
         }
 char *bamFileName = NULL;
 samfile_t *fh = bamOpen(fileOrUrl, &bamFileName);
