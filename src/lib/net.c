@@ -2317,4 +2317,3 @@ boolean hasProtocol(char *urlOrPath)
 {
 return stringIn("://", urlOrPath) != NULL;
 }
-

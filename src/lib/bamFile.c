@@ -125,6 +125,11 @@ boolean bamFileExists(char *fileOrUrl)
  * NOTE: this doesn't give enough diagnostics */
 {
 char *bamFileName = fileOrUrl;
+
+if (startsWith("drs://", bamFileName))
+        {
+        bamFileName = signed_http_from_drs2(bamFileName);
+        }
 samfile_t *fh = samopen(bamFileName, "rb", NULL);
 if (fh != NULL)
     {
@@ -148,6 +153,11 @@ samfile_t *bamOpen(char *fileOrUrl, char **retBamFileName)
  * there was a plan to use udcFuse filenames instead of URLs) */
 {
 char *bamFileName = fileOrUrl;
+
+if (startsWith("drs://", bamFileName))
+        {
+        bamFileName = signed_http_from_drs2(bamFileName);
+        }
 if (retBamFileName != NULL)
     *retBamFileName = bamFileName;
 
@@ -161,7 +171,7 @@ samfile_t *fh = samopen(bamFileName, "rb", NULL);
 // Check both fh and fh->header; non-NULL fh can have NULL header if header doesn't parse!
 if (fh == NULL)
     {
-    boolean usingUrl = (strstr(fileOrUrl, "tp://") || strstr(fileOrUrl, "https://"));
+    boolean usingUrl = (strstr(fileOrUrl, "ftp://") || strstr(fileOrUrl, "https://"));
     struct dyString *urlWarning = dyStringNew(0);
     if (usingUrl && fh == NULL)
         {
@@ -293,6 +303,16 @@ void bamAndIndexFetchPlus(char *fileOrUrl, char *baiFileOrUrl, char *position, b
  * The pSamFile parameter is optional.  If non-NULL it will be filled in, just for
  * the benefit of the callback function, with the open samFile.  */
 {
+
+if (startsWith("drs://", fileOrUrl))
+        {
+        fileOrUrl = signed_http_from_drs2(fileOrUrl);
+        }
+
+if (startsWith("drs://", bamFileName))
+        {
+        fileOrUrl = signed_http_from_drs2(fileOrUrl);
+        }
 char *bamFileName = NULL;
 samfile_t *fh = bamOpen(fileOrUrl, &bamFileName);
 if (fh->format.format == cram) 
