@@ -1664,7 +1664,6 @@ struct customFactory interactFactory =
 
 char* concatenate(char * dest, char * source) {
     char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
-
     if (out != NULL) {
             strcat(out, dest);
             strcat(out, source);
@@ -1691,6 +1690,15 @@ char * signed_http_from_drs(char * uri) {
     /* Open the command for reading. */
     setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
     setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    // getenv()
+//    /home/quokka/git/mod/kentest/src/hg/hgHubConnect/hgHubConnect.c
+//    struct pipeline *pl = pipelineOpen1(cmd, pipelineRead | pipelineNoAbort, NULL, NULL, hubCheckTimeout);
+//    struct lineFile *lf = pipelineLineFile(pl);
+//    char *line;
+//    while (lineFileNext(lf, &line, NULL))
+//        jsInlineF("%s", line);
+//    pipelineClose(&pl);
+
     fp = popen(cmd, "r");
     if (fp != NULL) {
 
@@ -3734,6 +3742,10 @@ static void customTrackUpdateFromSettings(struct customTrack *track,
 char *pLine = line;
 nextWord(&pLine);
 line = skipLeadingSpaces(pLine);
+if (startsWith("drs://", line))
+    {
+        line = signed_http_from_drs(line);
+    }
 struct hash *newSettings = hashVarLine(line, lineIx);
 struct hashCookie hc = hashFirst(newSettings);
 struct hashEl *hel = NULL;
