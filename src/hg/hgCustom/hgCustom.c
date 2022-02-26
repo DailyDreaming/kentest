@@ -1266,9 +1266,9 @@ else
     boolean warnOnly = FALSE;
 
     char *customText = fixNewData(cart);
+    customText = drs_check(customText)
     /* save input so we can display if there's an error */
-    char *savedCustomText = saveLines(cloneString(customText),
-                                SAVED_LINE_COUNT);
+    char *savedCustomText = saveLines(cloneString(customText), SAVED_LINE_COUNT);
     char *trackConfig = cartOptionalString(cart, hgCtConfigLines);
     char *savedConfig = cloneString(trackConfig);
 

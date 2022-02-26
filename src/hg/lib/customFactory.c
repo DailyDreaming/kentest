@@ -3779,7 +3779,6 @@ return hashIntValDefault(groups, group, FALSE);
 static void customTrackUpdateFromSettings(struct customTrack *track, char *genomeDb, char *line, int lineIx)
 /* replace settings in track with those from new track line */
 {
-line = drs_check(line);
 char *pLine = line;
 nextWord(&pLine);
 line = skipLeadingSpaces(pLine);
@@ -4038,6 +4037,7 @@ struct lineFile *lf = lineFileOnString("config", TRUE, config);
 char *line;
 struct slName *browserLines = NULL;
 while (lineFileNextReal(lf, &line))
+    line = drs_check(line);
     if (startsWithWord("track", line))
         customTrackUpdateFromSettings(ct, genomeDb, line, 1);
     else if (startsWithWord("browser", line))
