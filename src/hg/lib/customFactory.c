@@ -1713,6 +1713,48 @@ char * signed_http_from_drs(char * uri) {
     return results;
 }
 
+char * drs_check(char * uri) {
+    FILE *fp;
+
+    int BUFF_SIZE = 16384;
+
+    int size_line;
+    char line[BUFF_SIZE];
+
+    char* cmd = concatenate("bog -i '", uri);
+    cmd = concatenate(cmd, "'");
+//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
+
+//    cmd = concatenate(cmd, " 2>&1");
+
+    char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
+
+    /* Open the command for reading. */
+    setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
+    setenv("WORKSPACE_NAME", "scratch-lon", 1);
+    // getenv()
+//    /home/quokka/git/mod/kentest/src/hg/hgHubConnect/hgHubConnect.c
+//    struct pipeline *pl = pipelineOpen1(cmd, pipelineRead | pipelineNoAbort, NULL, NULL, hubCheckTimeout);
+//    struct lineFile *lf = pipelineLineFile(pl);
+//    char *line;
+//    while (lineFileNext(lf, &line, NULL))
+//        jsInlineF("%s", line);
+//    pipelineClose(&pl);
+
+    fp = popen(cmd, "r");
+    if (fp != NULL) {
+
+    /* Read the output a line at a time - output it. */
+    while (fgets(line, size_line = sizeof(line), fp) != NULL) {
+          results = concatenate(results, line);
+      }
+    }
+    pclose(fp);
+//    errAbort("%s", results);
+
+    return results;
+}
+
 static boolean hicRecognizer(struct customFactory *fac,
     struct customPp *cpp, char *type, struct customTrack *track)
 /* Return TRUE if looks like we're handling a hic track */
@@ -3734,18 +3776,14 @@ if (groups == NULL)
 return hashIntValDefault(groups, group, FALSE);
 }
 
-static void customTrackUpdateFromSettings(struct customTrack *track,
-                                          char *genomeDb,
-					  char *line, int lineIx)
+static void customTrackUpdateFromSettings(struct customTrack *track, char *genomeDb, char *line, int lineIx)
 /* replace settings in track with those from new track line */
 {
+line = drs_check(line);
 char *pLine = line;
 nextWord(&pLine);
 line = skipLeadingSpaces(pLine);
-if (startsWith("drs://", line))
-    {
-        line = signed_http_from_drs(line);
-    }
+
 struct hash *newSettings = hashVarLine(line, lineIx);
 struct hashCookie hc = hashFirst(newSettings);
 struct hashEl *hel = NULL;
