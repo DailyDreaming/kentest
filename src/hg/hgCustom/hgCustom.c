@@ -167,7 +167,7 @@ char * drs_check1(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate("bog -i '", uri);
+    char* cmd = concatenate1("bog -i '", uri);
     cmd = concatenate1(cmd, "'");
 //    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
 
@@ -1318,7 +1318,7 @@ else
     boolean warnOnly = FALSE;
 
     char *customText = fixNewData(cart);
-    customText = drs_check1(customText)
+    customText = drs_check1(customText);
     /* save input so we can display if there's an error */
     char *savedCustomText = saveLines(cloneString(customText), SAVED_LINE_COUNT);
     char *trackConfig = cartOptionalString(cart, hgCtConfigLines);
