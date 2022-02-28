@@ -149,7 +149,7 @@ puts(" Data must be formatted in\n"
 );
 }
 
-char* concatenate1(char * dest, char * source) {
+char* concatenate12(char * dest, char * source) {
     char * out = (char *)malloc(strlen(source) + strlen(dest) + 1);
     if (out != NULL) {
             strcat(out, dest);
@@ -159,45 +159,30 @@ char* concatenate1(char * dest, char * source) {
     return out;
 }
 
-char * drs_check1(char * uri) {
+char * drs_check12(char * uri) {
     FILE *fp;
 
-    int BUFF_SIZE = 16384;
+    int BUFF_SIZE = 1024;
 
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate1("bog ", uri);
-//    cmd = concatenate1(cmd, "'");
-//    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
-
-//    cmd = concatenate(cmd, " 2>&1");
+    char* cmd = concatenate12("bog ", uri);
 
     char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
 
-    /* Open the command for reading. */
     setenv("GOOGLE_PROJECT", "anvil-stage-demo", 1);
     setenv("WORKSPACE_NAME", "scratch-lon", 1);
-    // getenv()
-//    /home/quokka/git/mod/kentest/src/hg/hgHubConnect/hgHubConnect.c
-//    struct pipeline *pl = pipelineOpen1(cmd, pipelineRead | pipelineNoAbort, NULL, NULL, hubCheckTimeout);
-//    struct lineFile *lf = pipelineLineFile(pl);
-//    char *line;
-//    while (lineFileNext(lf, &line, NULL))
-//        jsInlineF("%s", line);
-//    pipelineClose(&pl);
 
     fp = popen(cmd, "r");
     if (fp != NULL) {
-
     /* Read the output a line at a time - output it. */
     while (fgets(line, size_line = sizeof(line), fp) != NULL) {
-          results = concatenate1(results, line);
+          results = concatenate12(results, line);
       }
     }
     pclose(fp);
-//    errAbort("%s", results);
-    results[strcspn(results, "\n")] = 0;
+//    results[strcspn(results, "\n")] = 0;
     return results;
 }
 
@@ -1318,7 +1303,7 @@ else
     boolean warnOnly = FALSE;
 
     char *customText = fixNewData(cart);
-    customText = drs_check1(customText);
+    customText = drs_check12(customText);
     /* save input so we can display if there's an error */
     char *savedCustomText = saveLines(cloneString(customText), SAVED_LINE_COUNT);
     char *trackConfig = cartOptionalString(cart, hgCtConfigLines);
