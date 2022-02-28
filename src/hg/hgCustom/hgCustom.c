@@ -162,7 +162,7 @@ char* concatenate12(char * dest, char * source) {
 char * drs_check12(char * uri) {
     FILE *fp;
 
-    int BUFF_SIZE = 1024;
+    int BUFF_SIZE = 102400;
 
     int size_line;
     char line[BUFF_SIZE];
