@@ -1319,6 +1319,7 @@ else
 
     char *customText = fixNewData(cart);
     customText = drs_check1(customText);
+    customText[strlen(customText) - 1] = 0;
     /* save input so we can display if there's an error */
     char *savedCustomText = saveLines(cloneString(customText), SAVED_LINE_COUNT);
     char *trackConfig = cartOptionalString(cart, hgCtConfigLines);
