@@ -167,7 +167,7 @@ char * drs_check12(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate12("bog ", uri);
+    char* cmd = concatenate12("/usr/local/bin/bog ", uri);
 
     char* results = (char*) malloc(BUFF_SIZE * sizeof(char));
 
