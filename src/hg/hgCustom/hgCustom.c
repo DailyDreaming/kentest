@@ -167,8 +167,8 @@ char * drs_check1(char * uri) {
     int size_line;
     char line[BUFF_SIZE];
 
-    char* cmd = concatenate1("bog -i '", uri);
-    cmd = concatenate1(cmd, "'");
+    char* cmd = concatenate1("bog ", uri);
+//    cmd = concatenate1(cmd, "'");
 //    char* cmd = concatenate("python3 -c 'import terra_notebook_utils.cli.commands.config; print(terra_notebook_utils.cli.commands.config.CLIConfig.path)'", " 2>&1");
 
 //    cmd = concatenate(cmd, " 2>&1");
